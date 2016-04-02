@@ -1,5 +1,7 @@
+import unittest
 from unittest import TestCase
-from myhdl import Signal, Simulation, delay, instance, now, StopSimulation
+from myhdl import (Signal, Simulation, delay, instance, now, StopSimulation,
+        traceSignals)
 from fpgaedu.hdl import ClockGen
 
 class ClockGenTestCase(TestCase):
@@ -20,8 +22,10 @@ class ClockGenTestCase(TestCase):
 
             raise StopSimulation()
 
-
         sim = Simulation(clockgen, test)
         sim.run()
 
+
+if __name__ == '__main__':
+    unittest.main()
         

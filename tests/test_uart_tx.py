@@ -1,7 +1,6 @@
 from myhdl import (Signal, ResetSignal, intbv, Simulation, StopSimulation,
         instance, delay)
 from math import ceil
-import unittest
 from unittest import TestCase
 from random import randint
 
