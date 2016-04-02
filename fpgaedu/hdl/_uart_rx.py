@@ -9,6 +9,6 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick):
         rx_data.next = 0
 
         if rx:
-            rx_data.next = 1
+            rx_data.next = 0
 
     return output_logic
