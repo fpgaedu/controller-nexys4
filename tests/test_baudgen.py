@@ -52,7 +52,7 @@ class BaudGenTestCase(TestCase):
             prev_now = curr_now = now()
 
             # Test 5 subsequent cycles
-            for j in range(5):
+            for j in range(3):
                 yield self.tx_tick.posedge
                 curr_now = now()
                 delta_now = curr_now - prev_now
@@ -105,7 +105,7 @@ class BaudGenTestCase(TestCase):
 
         @instance
         def test():
-            for j in range(100):
+            for j in range(5):
                 yield self.tx_tick.posedge
                 self.assertTrue(self.tx_tick)
                 self.assertEquals(self.rx_tick, self.tx_tick)
