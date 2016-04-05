@@ -1,6 +1,6 @@
 import os
 from myhdl import toVHDL, Signal, ResetSignal, intbv
-from fpgaedu.hdl import (BaudGen, UartRx, UartTx, BaudGenRxLookup, Rom)
+from fpgaedu.hdl import (BaudGen, UartRx, UartTx, BaudGenRxLookup, Rom, Fifo)
 
 # Instance constants
 _CLK_FREQ = 100000000
@@ -28,6 +28,13 @@ _UART_TX = Signal(False)
 _UART_TX_TICK = Signal(False)
 _UART_TX_DATA = Signal(intbv(0)[_UART_DATA_BITS:0])
 
+_FIFO_DIN = Signal(intbv(0)[32:0])
+_FIFO_DOUT = Signal(intbv(0)[32:0])
+_FIFO_ENQUEUE = Signal(False)
+_FIFO_DEQUEUE = Signal(False)
+_FIFO_EMPTY = Signal(False)
+_FIFO_FULL = Signal(False)
+
 def _create_output_directory():
     if not os.path.exists(_OUTPUT_DIRECTORY):
         os.makedirs(_OUTPUT_DIRECTORY)
@@ -53,11 +60,17 @@ def _generate_baudgen():
             clk_freq=_CLK_FREQ,
             baudrate=_UART_BAUDRATE, rx_div=_UART_RX_DIV)
 
+def _generate_fifo():
+    _set_tovhdl_defaults('fifo')
+    toVHDL(Fifo, _CLK, _RESET, _FIFO_DIN, _FIFO_ENQUEUE, _FIFO_DOUT,
+            _FIFO_DEQUEUE, _FIFO_EMPTY, _FIFO_FULL)
+
 if __name__ == '__main__':
     _create_output_directory()
     #_generate_rom()
     #_generate_baudgen_rx_lookup()
     _generate_uart_rx()
     _generate_baudgen()
+    _generate_fifo()
 
 
