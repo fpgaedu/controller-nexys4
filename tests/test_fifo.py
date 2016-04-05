@@ -49,12 +49,14 @@ class FifoTestCase(TestCase):
             yield self.clk.negedge
             self.assertEquals(self.dout, 0)
             self.assertTrue(self.empty)
+            self.assertFalse(self.full)
 
             self.din.next = 34
             self.enqueue.next = True
             yield self.clk.negedge
             self.assertEquals(self.dout, 34)
             self.assertFalse(self.empty)
+            self.assertFalse(self.full)
 
             self.enqueue.next = False
             for i in range(40):
@@ -65,6 +67,7 @@ class FifoTestCase(TestCase):
             yield self.clk.negedge
             self.assertEquals(self.dout, 34)
             self.assertFalse(self.empty)
+            self.assertTrue(self.full)
 
             self.enqueue.next = False
             self.assertEquals(self.dout, 34)
@@ -74,16 +77,20 @@ class FifoTestCase(TestCase):
             yield self.clk.negedge
             self.dequeue.next = False
             self.assertEquals(self.dout, 23)
+            self.assertFalse(self.empty)
+            self.assertFalse(self.full)
 
             self.dequeue.next = True
             yield self.clk.negedge
             self.assertEquals(self.dout, 0)
             self.assertTrue(self.empty)
+            self.assertFalse(self.full)
 
             self.dequeue.next = False
             yield self.clk.negedge
             self.assertEquals(self.dout, 0)
             self.assertTrue(self.empty)
+            self.assertFalse(self.full)
 
             self.stop_simulation()
             
