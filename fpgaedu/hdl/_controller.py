@@ -1,4 +1,4 @@
-from myhdl import always_seq, always_comb, enum, Signal, intbv
+from myhdl import always, always_seq, always_comb, enum, Signal, intbv
 
 def Controller(spec, clk, reset, rx_fifo_dout, rx_fifo_dequeue, rx_fifo_empty, 
         tx_fifo_din, tx_fifo_enqueue, tx_fifo_full, exp_addr, exp_din, 
@@ -137,6 +137,7 @@ def Controller(spec, clk, reset, rx_fifo_dout, rx_fifo_dequeue, rx_fifo_empty,
         '''
         Drives the tx_fifo_din and tx_fifo_enqueue signal
         '''
+    
         if cmd_opcode == spec.opcode_cmd_read:
             response.next[spec.index_opcode_high+1:spec.index_opcode_low] = \
                     spec.opcode_res_read_success
@@ -176,5 +177,28 @@ def Controller(spec, clk, reset, rx_fifo_dout, rx_fifo_dequeue, rx_fifo_empty,
 #                    OPCODE_RES_STATUS
 #            response.next[index_value_high:index_value_low] = 0
 
-    return split_cmd, tx_fifo_output_logic
+
+    @always(clk.negedge)
+    def clk_exp_en_register_logic():
+        '''
+        do it on negedge, so that the clock enable signal is high on next 
+        rising edge
+        '''
+        clk_en_reg.next = clk_en_next
+
+    @always_comb
+    def clk_exp_en_next_state_logic():
+        '''
+        '''
+        if cmd_opcode == spec.opcode_cmd_step:
+            clk_en_next.next = False
+
+    @always_comb
+    def clk_exp_en_output_logic():
+        exp_clk_en.next = clk_en_reg
+
+    return (split_cmd, rx_fifo_output_logic, tx_fifo_output_logic, 
+            clk_exp_en_register_logic, clk_exp_en_next_state_logic, 
+            clk_exp_en_output_logic)
+
 

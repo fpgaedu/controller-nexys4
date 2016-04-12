@@ -131,3 +131,18 @@ class ControllerSpecTestCase(TestCase):
             data = int('111111111', 2)
             message = spec.addr_type_message(opcode, address, data)
 
+    def test_parse(self):
+        spec = ControllerSpec(8, 8)
+        message = int('10101100110011110000', 2)
+
+        parsed_opcode = spec.parse_opcode(message)
+        self.assertEquals(parsed_opcode, int('1010', 2))
+
+        parsed_addr = spec.parse_addr(message)
+        self.assertEquals(parsed_addr, int('11001100', 2))
+        
+        parsed_data = spec.parse_data(message)
+        self.assertEquals(parsed_data, int('11110000', 2))
+        
+        parsed_value = spec.parse_value(message)
+        self.assertEquals(parsed_value, int('1100110011110000', 2))

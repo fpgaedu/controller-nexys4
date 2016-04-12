@@ -8,7 +8,10 @@ class ControllerSpec():
     _WIDTH_OPCODE = 4
 
     _OPCODE_CMD_READ = 0
+    # - addr
     _OPCODE_CMD_WRITE = 1
+    # - addr
+    # - data
     _OPCODE_CMD_RESET = 2
     _OPCODE_CMD_STEP = 3
     _OPCODE_CMD_START = 4
@@ -16,17 +19,28 @@ class ControllerSpec():
     _OPCODE_CMD_STATUS = 6
 
     _OPCODE_RES_READ_SUCCESS = 0
+    # - addr
+    # - data
     _OPCODE_RES_READ_ERROR_MODE = 1
+    # - addr
     _OPCODE_RES_WRITE_SUCCESS = 2
+    # - addr
+    # - data
     _OPCODE_RES_WRITE_ERROR_MODE = 3
+    # - addr
+    # - data
     _OPCODE_RES_RESET_SUCCESS = 4
     _OPCODE_RES_STEP_SUCCESS = 5
+    # - value (cycle count after step)
     _OPCODE_RES_STEP_ERROR_MODE = 6
     _OPCODE_RES_START_SUCCESS = 7
+    # - value (cycle count before start)
     _OPCODE_RES_START_ERROR_MODE = 8
     _OPCODE_RES_PAUSE_SUCCESS = 9
+    # - value (cycle count after pause)
     _OPCODE_RES_PAUSE_ERROR_MODE = 10
     _OPCODE_RES_STATUS = 11 
+    # - value (mode + cycle count)
 
     _ADDR_TYPE_CMD_OPCODES = [_OPCODE_CMD_READ, _OPCODE_CMD_WRITE] 
     _ADDR_TYPE_RES_OPCODES = [_OPCODE_RES_READ_SUCCESS, 
@@ -205,19 +219,19 @@ class ControllerSpec():
 
         return int(message)
 
-    def parse_opcode(message):
+    def parse_opcode(self, message):
         m = intbv(message)
         return int(m[self.index_opcode_high+1:self.index_opcode_low])
 
-    def parse_addr(message):
+    def parse_addr(self, message):
         m = intbv(message)
         return int(m[self.index_addr_high+1:self.index_addr_low])
 
-    def parse_data(message):
+    def parse_data(self, message):
         m = intbv(message)
         return int(m[self.index_data_high+1:self.index_data_low])
 
-    def parse_value(message):
+    def parse_value(self, message):
         m = intbv(message)
         return int(m[self.index_value_high+1:self.index_value_low])
 
