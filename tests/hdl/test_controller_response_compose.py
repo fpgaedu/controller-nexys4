@@ -29,7 +29,7 @@ class ControllerResponseComposeTestCase(TestCase):
                 nop=self.nop, cycle_count=self.cycle_count,
                 tx_fifo_full=self.tx_fifo_full, 
                 tx_fifo_enqueue=self.tx_fifo_enqueue,
-                tx_fifo_din=self.tx_fifo_din)
+                tx_fifo_data_write=self.tx_fifo_din)
 
     def simulate(self, test_logic, duration=None):
         sim = Simulation(self.response_compose, test_logic)

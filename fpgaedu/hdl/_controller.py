@@ -1,20 +1,26 @@
 from myhdl import always, always_seq, always_comb, enum, Signal, intbv
 
-def Controller(spec, clk, reset, rx_fifo_dout, rx_fifo_dequeue, rx_fifo_empty, 
-        tx_fifo_din, tx_fifo_enqueue, tx_fifo_full, exp_addr, exp_din, 
-        exp_dout, exp_wen, exp_reset, exp_clk_en):
+from fpgaedu import ControllerSpec
+from fpgaedu.hdl._controller_control import ControllerControl
+from fpgaedu.hdl._controller_cycle_control import ControllerCycleControl
+from fpgaedu.hdl._controller_response_compose import ControllerResponseCompose
+
+def Controller(spec, clk, reset, rx_fifo_data_read, rx_fifo_dequeue, 
+        rx_fifo_empty, tx_fifo_data_write, tx_fifo_enqueue, tx_fifo_full, 
+        exp_addr, exp_data_write, exp_data_read, exp_wen, exp_reset, 
+        exp_clk_en):
     '''
     clk
         Clock input
     reset
         Reset input
-    rx_fifo_dout
+    rx_fifo_data
         Input signal reading the rx fifo's dout signal
     rx_fifo_dequeue
         Output pulse signal signalling the rx fifo to pop the current oldest item
     rx_fifo_empty
         Input signal indicating whether the rx fifo is empty
-    tx_fifo_din
+    tx_fifo_data
         Output signal setting the value to add to the tx fifo
     tx_fifo_enqueue
         Output pulse signal signallig the tx_fifo to add the value set on 
@@ -46,7 +52,7 @@ def Controller(spec, clk, reset, rx_fifo_dout, rx_fifo_dequeue, rx_fifo_empty,
         successfull, unsuccessfull
     reset()
         Resets the experiment state to its initial condition
-    step(n)
+    step()
         enables the experiment clock for n cycles
     start()
         the controller will switch to autonomous mode
@@ -56,58 +62,66 @@ def Controller(spec, clk, reset, rx_fifo_dout, rx_fifo_dequeue, rx_fifo_empty,
         request the controller status
 
 
-    The controller will return the following responses to the PC:
-
-    read success(address, value)
-    read error - address out of range(address)
-    read error - controller in autonomous mode
-    write success(address, value)
-    write error - address out of range(address)
-    write error - controller in autonomous mode
-    reset acknowledge
-    step acknowledge(n)
-    start acknowledge
-    pause acknowledge
-    status result(status)
-        manual: status = 0
-        autonomous: status = 1
-
-    address-type message layout
-    
-    47            40 39             \   \    8 7             0
-     |----opcode---| |----address---/   /----| |-----data----|
-     |             | |              \   \    | |             |
-    |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-/   /-|-|-|-|-|-|-|-|-|-|-|
-                                    \   \
-
-    value-type message layout
-
-    47            40 39                           \   \      0
-     |----opcode---| |----value-------------------/   /------|
-     |             | |                            \   \      |
-    |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-/   /-|-|-|-|
-                                                  \   \
     '''
 
-    state_t = enum('CYCLE_NONE', 'CYCLE_ONE', 'CYCLE_N', 'CYCLE')
+    # Pipeline registers
+    ex_res_opcode_res_reg = Signal(intbv(0)[spec.width_opcode:0])
+    ex_res_opcode_res_next = Signal(intbv(0)[spec.width_opcode:0])
+    ex_res_nop_reg = Signal(True)
+    ex_res_nop_next = Signal(True)
+    ex_res_cycle_count_reg = Signal(intbv(0)[spec.width_value:0])
+    ex_res_cycle_count_next = Signal(intbv(0)[spec.width_value:0])
+    ex_res_addr_reg = Signal(intbv(0)[spec.width_addr:0])
+    ex_res_addr_next = Signal(intbv(0)[spec.width_addr:0])
 
-    state_reg = Signal(state_t.CYCLE_NONE)
-    state_next = Signal(state_t.CYCLE_NONE)
-    count_reg = Signal(intbv(0)[spec.width_value-1:0])
-    count_next = Signal(intbv(0)[spec.width_value-1:0])
-    countdown_reg = Signal(intbv(0)[spec.width_value-1:0])
-    countdown_next = Signal(intbv(0)[spec.width_value-1:0])
-
-    clk_en_reg = Signal(False)
-    clk_en_next = Signal(False)
-
-    cmd_message = rx_fifo_dout
+    #internal signals
+    cycle_autonomous = Signal(False)
+    cycle_start = Signal(False)
+    cycle_pause = Signal(False)
+    cycle_step = Signal(False)
+    
+    cmd_message = rx_fifo_data_read
     cmd_opcode = Signal(intbv(0)[spec.width_opcode-1:0])
     cmd_addr = Signal(intbv(0)[spec.width_addr-1:0])
     cmd_data = Signal(intbv(0)[spec.width_data-1:0])
     cmd_value = Signal(intbv(0)[spec.width_value-1:0])
 
-    response = Signal(intbv(0)[spec.width_message-1:0])
+    # EX stage instances
+    control = ControllerControl(spec=spec, opcode_cmd=cmd_opcode,
+            opcode_res=ex_res_opcode_res_next, rx_fifo_empty=rx_fifo_empty,
+            cycle_autonomous=cycle_autonomous, rx_fifo_dequeue=rx_fifo_dequeue,
+            tx_fifo_full=tx_fifo_full, nop=ex_res_nop_next,
+            exp_wen=exp_wen, exp_reset=exp_reset, cycle_start=cycle_start, 
+            cycle_pause=cycle_pause, cycle_step=cycle_step)
+
+    cycle_control = ControllerCycleControl(spec=spec, clk=clk, reset=reset,
+            start=cycle_start, pause=cycle_pause, step=cycle_step, 
+            cycle_autonomous=cycle_autonomous, 
+            cycle_count=ex_res_cycle_count_next, exp_clk_en=exp_clk_en)
+
+    # RES stage instances
+    res_compose = ControllerResponseCompose(spec=spec, 
+            opcode_res=ex_res_opcode_res_reg,
+            addr=ex_res_addr_reg, data=exp_data_read,
+            nop=ex_res_nop_reg, cycle_count=ex_res_cycle_count_reg,
+            tx_fifo_full=tx_fifo_full, tx_fifo_enqueue=tx_fifo_enqueue,
+            tx_fifo_data_write=tx_fifo_data_write)
+
+    @always_seq(clk.posedge, reset)
+    def pipeline_register_logic():
+        ex_res_opcode_res_reg.next = ex_res_opcode_res_next
+        ex_res_nop_reg.next = ex_res_nop_next
+        ex_res_cycle_count_reg.next = ex_res_cycle_count_next
+        ex_res_addr_reg.next = ex_res_addr_next
+
+    @always_comb
+    def pipeline_next_state_logic():
+        ex_res_addr_next.next = cmd_addr
+
+    @always_comb
+    def experiment_setup_connections():
+        exp_addr.next = cmd_addr
+        exp_data_write.next = cmd_data
 
     @always_comb
     def split_cmd():
@@ -120,85 +134,7 @@ def Controller(spec, clk, reset, rx_fifo_dout, rx_fifo_dequeue, rx_fifo_empty,
         cmd_value.next = cmd_message[spec.index_value_high+1:
                 spec.index_value_low]
 
-    @always_comb
-    def rx_fifo_output_logic():
-        '''
-        Drives the rx_fifo_dequeue signal
-        '''
-        if rx_fifo_empty:
-            rx_fifo_dequeue.next = False
-        elif tx_fifo_full:
-            rx_fifo_dequeue.next = False
-        else:
-            rx_fifo_dequeue.next = True
-
-    @always_comb
-    def tx_fifo_output_logic():
-        '''
-        Drives the tx_fifo_din and tx_fifo_enqueue signal
-        '''
-    
-        if cmd_opcode == spec.opcode_cmd_read:
-            response.next[spec.index_opcode_high+1:spec.index_opcode_low] = \
-                    spec.opcode_res_read_success
-            response.next[spec.index_addr_high+1:spec.index_addr_low] = \
-                    cmd_addr
-            response.next[spec.index_data_high+1:spec.index_data_low] = \
-                    exp_dout
-
-#        elif cmd_opcode == OPCODE_CMD_WRITE:
-#            response.next[index_opcode_high:index_opcode_low] = \
-#                    OPCODE_RES_WRITE_SUCCESS
-#            response.next[index_addr_high:index_addr_low] = cmd_addr
-#            response.next[index_data_high:index_data_low] = exp_dout
-#
-#        elif cmd_opcode == OPCODE_CMD_RESET:
-#            response.next[index_opcode_high:index_opcode_low] = \
-#                    OPCODE_RES_RESET_SUCCESS
-#            response.next[index_value_high:index_value_low] = 0
-#
-#        elif cmd_opcode == CMD_STEP:
-#            response.next[index_opcode_high:index_opcode_low] = \
-#                    OPCODE_RES_STEP_SUCCESS
-#            response.next[index_value_high:index_value_low] = 0
-#
-#        elif cmd_opcode == CMD_START:
-#            response.next[index_opcode_high:index_opcode_low] = \
-#                    OPCODE_RES_START_SUCCESS
-#            response.next[index_value_high:index_value_low] = 0
-#
-#        elif cmd_opcode == CMD_PAUSE:
-#            response.next[index_opcode_high:index_opcode_low] = \
-#                    OPCODE_RES_PAUSE_SUCCESS
-#            response.next[index_value_high:index_value_low] = 0
-#
-#        elif cmd_opcode == CMD_STATUS:
-#            response.next[index_opcode_high:index_opcode_low] = \
-#                    OPCODE_RES_STATUS
-#            response.next[index_value_high:index_value_low] = 0
-
-
-    @always(clk.negedge)
-    def clk_exp_en_register_logic():
-        '''
-        do it on negedge, so that the clock enable signal is high on next 
-        rising edge
-        '''
-        clk_en_reg.next = clk_en_next
-
-    @always_comb
-    def clk_exp_en_next_state_logic():
-        '''
-        '''
-        if cmd_opcode == spec.opcode_cmd_step:
-            clk_en_next.next = False
-
-    @always_comb
-    def clk_exp_en_output_logic():
-        exp_clk_en.next = clk_en_reg
-
-    return (split_cmd, rx_fifo_output_logic, tx_fifo_output_logic, 
-            clk_exp_en_register_logic, clk_exp_en_next_state_logic, 
-            clk_exp_en_output_logic)
+    return (control, cycle_control, res_compose, split_cmd, 
+            pipeline_register_logic, pipeline_next_state_logic)
 
 

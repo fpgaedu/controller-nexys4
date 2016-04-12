@@ -28,7 +28,8 @@ class ControllerCycleControlTestCase(TestCase):
         self.clockgen = ClockGen(self.clk, self.HALF_PERIOD)
         self.cycle_control = ControllerCycleControl(spec=self.spec,
                 clk=self.clk, reset=self.reset, start=self.start, 
-                pause=self.pause, step=self.step, autonomous=self.autonomous,
+                pause=self.pause, step=self.step, 
+                cycle_autonomous=self.autonomous,
                 cycle_count=self.cycle_count, exp_clk_en=self.exp_clk_en)
 
     def simulate(self, test_logic, duration=None):

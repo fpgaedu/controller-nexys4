@@ -1,7 +1,7 @@
 from myhdl import always_seq, always_comb, enum, Signal, intbv
 
-def ControllerCycleControl(spec, clk, reset, start, pause, step, autonomous, 
-        cycle_count, exp_clk_en):
+def ControllerCycleControl(spec, clk, reset, start, pause, step, 
+        cycle_autonomous, cycle_count, exp_clk_en):
     '''
     spec:
         Controller spec
@@ -62,7 +62,7 @@ def ControllerCycleControl(spec, clk, reset, start, pause, step, autonomous,
     
     @always_comb
     def output_logic():
-        autonomous.next = (state_reg == state_t.AUTONOMOUS)
+        cycle_autonomous.next = (state_reg == state_t.AUTONOMOUS)
         cycle_count.next = cycle_count_reg
         exp_clk_en.next = exp_clk_en_reg
 

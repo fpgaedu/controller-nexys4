@@ -2,7 +2,28 @@ from math import ceil
 from myhdl import intbv
 
 class ControllerSpec():
+    '''
+    address-type message layout
+     - width_opcode: 8
+     - width_addr:  32
+     - width_data:   8
+    
+    47            40 39             \   \    8 7             0
+     |----opcode---| |----address---/   /----| |-----data----|
+     |             | |              \   \    | |             |
+    |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-/   /-|-|-|-|-|-|-|-|-|-|-|
+                                    \   \
 
+    value-type message layout
+     - width_opcode: 8
+     - width_addr:  40
+
+    47            40 39                           \   \      0
+     |----opcode---| |----value-------------------/   /------|
+     |             | |                            \   \      |
+    |-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-|-/   /-|-|-|-|
+                                                  \   \
+    '''
     _WIDTH_BYTE = 8
     # opcode width = 4 => 2^4=16 opcodes possible
     _WIDTH_OPCODE = 4

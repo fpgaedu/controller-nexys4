@@ -15,39 +15,40 @@ class ControllerTestCase(TestCase):
     def setUp(self):
         self.spec = ControllerSpec(width_addr=self.WIDTH_ADDR, 
                 width_data=self.WIDTH_DATA)
+        # Input signals
         self.clk = Signal(False)
-        self.reset = Signal(False)
-        self.rx_fifo_dout = Signal(intbv(0)[self.spec.width_message:0])
-        self.rx_fifo_dequeue = Signal(False)
+        self.reset = ResetSignal(True, active=False, async=False)
+        self.rx_fifo_data_read = Signal(intbv(0)[self.spec.width_message:0])
         self.rx_fifo_empty = Signal(True)
-        self.tx_fifo_din = Signal(intbv(0)[self.spec.width_message:0])
-        self.tx_fifo_enqueue = Signal(False)
         self.tx_fifo_full = Signal(False)
+        self.exp_data_read = Signal(intbv(0)[self.spec.width_data:0])
+        # Output signals
+        self.rx_fifo_dequeue = Signal(False)
+        self.tx_fifo_data_write = Signal(intbv(0)[self.spec.width_message:0])
+        self.tx_fifo_enqueue = Signal(False)
         self.exp_addr = Signal(intbv(0)[self.spec.width_addr:0])
-        self.exp_din = Signal(intbv(0)[self.spec.width_data:0])
-        self.exp_dout = Signal(intbv(0)[self.spec.width_data:0])
+        self.exp_data_write = Signal(intbv(0)[self.spec.width_data:0])
         self.exp_wen = Signal(False)
         self.exp_reset = ResetSignal(True, active=False, async=False)
         self.exp_clk_en = Signal(False)
 
         self.clockgen = ClockGen(clk=self.clk, half_period=self.HALF_PERIOD)
         self.controller = Controller(spec=self.spec, clk=self.clk, 
-                reset=self.reset, rx_fifo_dout=self.rx_fifo_dout, 
+                reset=self.reset, rx_fifo_data_read=self.rx_fifo_data_read, 
                 rx_fifo_dequeue=self.rx_fifo_dequeue,
-                rx_fifo_empty=self.rx_fifo_dequeue,
-                tx_fifo_din =self.tx_fifo_din,
+                rx_fifo_empty=self.rx_fifo_empty,
+                tx_fifo_data_write =self.tx_fifo_data_write,
                 tx_fifo_enqueue=self.tx_fifo_enqueue,
                 tx_fifo_full=self.tx_fifo_full, exp_addr=self.exp_addr, 
-                exp_din=self.exp_din, exp_dout=self.exp_dout,
+                exp_data_write=self.exp_data_write, 
+                exp_data_read=self.exp_data_read,
                 exp_wen=self.exp_wen, exp_reset=self.exp_reset,
                 exp_clk_en=self.exp_clk_en)
 
         @always(self.clk.posedge)
         def _mock_experiment():
-
             if self.exp_wen: 
                 self.MEM[self.exp_addr] = self.exp_din
-
             try:
                 self.exp_dout.next = self.MEM[self.exp_addr]
             except KeyError:
@@ -79,7 +80,7 @@ class ControllerTestCase(TestCase):
         self.assertEquals(addr_actual, addr_expected)
         self.assertEquals(data_actual, data_expected)
 
-    def _test_read(self):
+    def test_read(self):
 
         opcode = self.spec.opcode_cmd_read
         addr = 234
@@ -94,16 +95,11 @@ class ControllerTestCase(TestCase):
             self.reset.next = True
             yield self.clk.negedge
 
-            self.rx_fifo_dout.next = cmd
+            self.rx_fifo_data_read.next = cmd
             self.rx_fifo_empty.next = False
 
             yield self.clk.negedge
 
-            self.rx_fifo_dout.next = 0
-            self.rx_fifo_empty.next = True
-
-            #yield self.tx_fifo_enqueue.posedge
-            #self.assertEquals(self.tx_fifo_din, expected_res)
 
             self.stop_simulation()
 
