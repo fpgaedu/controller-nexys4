@@ -88,7 +88,7 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
         elif state_reg == state_t.SEND_START:
             tx.next = START
         elif state_reg == state_t.SEND_DATA:
-            tx.next = data_reg(count_reg)
+            tx.next = data_reg[count_reg]
         elif state_reg == state_t.SEND_STOP:
             tx.next = STOP
 

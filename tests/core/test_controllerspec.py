@@ -146,3 +146,15 @@ class ControllerSpecTestCase(TestCase):
         
         parsed_value = spec.parse_value(message)
         self.assertEquals(parsed_value, int('1100110011110000', 2))
+
+    def test_chr_start(self):
+        spec = ControllerSpec(8, 8)
+        self.assertEquals(spec.chr_start, 0x12)
+
+    def test_chr_stop(self):
+        spec = ControllerSpec(8, 8)
+        self.assertEquals(spec.chr_stop, 0x13)
+
+    def test_chr_esc(self):
+        spec = ControllerSpec(8, 8)
+        self.assertEquals(spec.chr_esc, 0x7D)

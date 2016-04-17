@@ -9,6 +9,7 @@ class ControllerControlTestCase(TestCase):
 
     WIDTH_ADDR = 32
     WIDTH_DATA = 8
+    EXP_RESET_ACTIVE = False
 
     def setUp(self):
         self.spec = ControllerSpec(self.WIDTH_ADDR, self.WIDTH_DATA)
@@ -17,17 +18,19 @@ class ControllerControlTestCase(TestCase):
         self.rx_fifo_empty = Signal(False)
         self.tx_fifo_full = Signal(False)
         self.cycle_autonomous = Signal(False)
+        self.reset = ResetSignal(True, active=False, async=False)
         # output signals
         self.rx_fifo_dequeue = Signal(False)
         self.opcode_res = Signal(intbv(0)[self.spec.width_message:0])
         self.nop = Signal(False)
         self.exp_wen = Signal(False)
-        self.exp_reset = ResetSignal(True, active=False, async=False)
+        self.exp_reset = ResetSignal(True, active=self.EXP_RESET_ACTIVE, 
+                async=False)
         self.cycle_start = Signal(False)
         self.cycle_pause = Signal(False)
         self.cycle_step = Signal(False)
 
-        self.control = ControllerControl(spec=self.spec, 
+        self.control = ControllerControl(spec=self.spec, reset=self.reset,
                 opcode_cmd=self.opcode_cmd, opcode_res=self.opcode_res,
                 rx_fifo_empty=self.rx_fifo_empty, 
                 rx_fifo_dequeue=self.rx_fifo_dequeue,
@@ -35,7 +38,8 @@ class ControllerControlTestCase(TestCase):
                 exp_wen=self.exp_wen, exp_reset=self.exp_reset,
                 cycle_autonomous=self.cycle_autonomous,
                 cycle_start=self.cycle_start, cycle_pause=self.cycle_pause,
-                cycle_step=self.cycle_step)
+                cycle_step=self.cycle_step, 
+                exp_reset_active=self.EXP_RESET_ACTIVE)
         
     def simulate(self, test_logic, duration=None):
         sim = Simulation(self.control, test_logic)
@@ -92,25 +96,31 @@ class ControllerControlTestCase(TestCase):
             self.rx_fifo_empty.next = True
             self.tx_fifo_full.next = True
             yield delay(10)
-            self.assertFalse(self.exp_reset)
+            self.assertEquals(self.exp_reset, not self.EXP_RESET_ACTIVE)
 
             self.opcode_cmd.next = self.spec.opcode_cmd_reset
             self.rx_fifo_empty.next = False
             self.tx_fifo_full.next = True
             yield delay(10)
-            self.assertFalse(self.exp_reset)
+            self.assertEquals(self.exp_reset, not self.EXP_RESET_ACTIVE)
 
             self.opcode_cmd.next = self.spec.opcode_cmd_reset
             self.rx_fifo_empty.next = True
             self.tx_fifo_full.next = False
             yield delay(10)
-            self.assertFalse(self.exp_reset)
+            self.assertEquals(self.exp_reset, not self.EXP_RESET_ACTIVE)
 
             self.opcode_cmd.next = self.spec.opcode_cmd_reset
             self.rx_fifo_empty.next = False
             self.tx_fifo_full.next = False
             yield delay(10)
-            self.assertTrue(self.exp_reset)
+            self.assertEquals(self.exp_reset, self.EXP_RESET_ACTIVE)
+
+            # assert that the exp_reset signal is activated when the controller 
+            # reset signal is activated
+            self.reset.next = self.reset.active
+            yield delay(10)
+            self.assertEquals(self.exp_reset, self.EXP_RESET_ACTIVE)
 
             self.stop_simulation()
 
@@ -245,6 +255,10 @@ class ControllerControlTestCase(TestCase):
             # cycle controller in autonomous mode, should no longer signal 
             # start 
             self.cycle_autonomous.next = True
+            yield delay(10)
+            self.assertFalse(self.cycle_start)
+
+            self.reset.next = self.reset.active
             yield delay(10)
             self.assertFalse(self.cycle_start)
 

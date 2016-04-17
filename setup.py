@@ -8,4 +8,4 @@ setup(name='fpgaedu',
         packages=['fpgaedu'],
         install_requires=['myhdl', 'pytest-runner'],
         test_suite='pytest-runner',
-        tests_require=['pytest'])
+        tests_require=['pytest', 'pytest-xdist'])

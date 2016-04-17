@@ -68,6 +68,10 @@ class ControllerSpec():
             _OPCODE_RES_READ_ERROR_MODE, _OPCODE_RES_WRITE_SUCCESS, 
             _OPCODE_RES_WRITE_ERROR_MODE]
 
+    _CHR_START = 0x12
+    _CHR_STOP = 0x13
+    _CHR_ESC = 0x7D
+
     def __init__(self, width_addr, width_data):
 
         if width_addr < 1:
@@ -255,4 +259,17 @@ class ControllerSpec():
     def parse_value(self, message):
         m = intbv(message)
         return int(m[self.index_value_high+1:self.index_value_low])
+
+    @property
+    def chr_start(self):
+        return self._CHR_START
+
+    @property
+    def chr_stop(self):
+        return self._CHR_STOP
+
+    @property
+    def chr_esc(self):
+        return self._CHR_ESC
+
 

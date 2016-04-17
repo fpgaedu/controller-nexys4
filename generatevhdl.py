@@ -3,6 +3,7 @@ from myhdl import toVHDL, Signal, ResetSignal, intbv
 from fpgaedu import ControllerSpec
 from fpgaedu.hdl import (BaudGen, UartRx, UartTx, BaudGenRxLookup, Rom, Fifo,
         Controller)
+from fpgaedu.hdl import nexys4
 
 # Instance constants
 _CLK_FREQ = 100000000
@@ -13,6 +14,7 @@ _UART_STOP_BITS = 1
 _WIDTH_DATA = 8
 _WIDTH_ADDR = 32
 _SPEC = ControllerSpec(_WIDTH_ADDR, _WIDTH_DATA)
+_EXP_RESET_ACTIVE = True
 
 # toVHDL() constants
 _STD_LOGIC_PORTS = True
@@ -32,6 +34,9 @@ _UART_RX_BAUD_TICK = Signal(False)
 _UART_TX = Signal(False)
 _UART_TX_TICK = Signal(False)
 _UART_TX_DATA = Signal(intbv(0)[_UART_DATA_BITS:0])
+_UART_TX_START = Signal(False)
+_UART_TX_BUSY = Signal(False)
+_UART_TX_BAUD_TICK = Signal(False)
 
 _FIFO_DIN = Signal(intbv(0)[32:0])
 _FIFO_DOUT = Signal(intbv(0)[32:0])
@@ -60,6 +65,7 @@ _EXP_DOUT = Signal(intbv(0)[_SPEC.width_data:0])
 _EXP_WEN = Signal(False)
 _EXP_RESET = Signal(False)
 _EXP_CLK = Signal(False)
+_EXP_CLK_EN = Signal(False)
 
 def _create_output_directory():
     if not os.path.exists(_OUTPUT_DIRECTORY):
@@ -80,6 +86,13 @@ def _generate_uart_rx():
             _UART_RX_BUSY, _UART_RX_BAUD_TICK, data_bits=_UART_DATA_BITS, 
             stop_bits=_UART_STOP_BITS, rx_div=_UART_RX_DIV)
 
+def _generate_uart_tx():
+    _set_tovhdl_defaults('uart_tx')
+    toVHDL(UartTx, clk=_CLK, reset=_RESET, tx=_UART_TX, tx_data=_UART_TX_DATA,
+            tx_start=_UART_TX_START, tx_busy=_UART_TX_BUSY, 
+            baud_tick=_UART_TX_BAUD_TICK, data_bits=_UART_DATA_BITS, 
+            stop_bits=_UART_STOP_BITS)
+
 def _generate_baudgen():
     _set_tovhdl_defaults('baudgen')
     toVHDL(BaudGen, _CLK, _RESET, _UART_RX_TICK, _UART_TX_TICK, 
@@ -94,11 +107,26 @@ def _generate_fifo():
 def _generate_controller():
     _set_tovhdl_defaults('controller')
     toVHDL(Controller, spec=_SPEC, clk=_CLK, reset=_RESET, 
-            rx_fifo_dout=_RX_FIFO_DOUT, rx_fifo_dequeue=_RX_FIFO_DEQUEUE,
-            rx_fifo_empty=_RX_FIFO_EMPTY, tx_fifo_din=_TX_FIFO_DIN,
+            rx_fifo_data_read=_RX_FIFO_DOUT, rx_fifo_dequeue=_RX_FIFO_DEQUEUE,
+            rx_fifo_empty=_RX_FIFO_EMPTY, tx_fifo_data_write=_TX_FIFO_DIN,
             tx_fifo_enqueue=_TX_FIFO_ENQUEUE, tx_fifo_full=_TX_FIFO_FULL,
-            exp_addr=_EXP_ADDR, exp_din=_EXP_DIN, exp_dout=_EXP_DOUT, 
-            exp_wen=_EXP_WEN, exp_reset=_EXP_RESET, exp_clk=_EXP_CLK)
+            exp_addr=_EXP_ADDR, exp_data_write=_EXP_DIN, exp_data_read=_EXP_DOUT, 
+            exp_wen=_EXP_WEN, exp_reset=_EXP_RESET, exp_clk_en=_EXP_CLK_EN, 
+            exp_reset_active=_EXP_RESET_ACTIVE)
+
+def _generate_nexys4_clock_enable_buffer():
+    _set_tovhdl_defaults('nexys4bufgce')
+    toVHDL(nexys4.ClockEnableBuffer, clk_in=_CLK, clk_out=_EXP_CLK, 
+            clk_en=_EXP_CLK_EN)
+
+def _generate_nexys4_board_component():
+    _set_tovhdl_defaults('nexys4boardcomponent')
+    toVHDL(nexys4.BoardComponent, spec=_SPEC, clk=_CLK, reset=_RESET,
+            rx=_UART_RX, tx=_UART_TX, exp_addr=_EXP_ADDR, 
+            exp_data_write=_EXP_DIN, exp_data_read=_EXP_DOUT, 
+            exp_wen=_EXP_WEN, exp_reset=_EXP_RESET, exp_clk=_EXP_CLK, 
+            exp_reset_active=_EXP_RESET_ACTIVE, baudrate=_UART_BAUDRATE)
+
 
 if __name__ == '__main__':
     _create_output_directory()
@@ -106,5 +134,8 @@ if __name__ == '__main__':
     #_generate_baudgen_rx_lookup()
     _generate_controller()
     _generate_uart_rx()
+    _generate_uart_tx()
     _generate_baudgen()
     _generate_fifo()
+    _generate_nexys4_clock_enable_buffer()
+    _generate_nexys4_board_component()
