@@ -127,6 +127,9 @@ def _generate_nexys4_board_component():
             exp_wen=_EXP_WEN, exp_reset=_EXP_RESET, exp_clk=_EXP_CLK, 
             exp_reset_active=_EXP_RESET_ACTIVE, baudrate=_UART_BAUDRATE)
 
+def _generate_nexys4_test_setup():
+    _set_to_vhdl_defaults('nexys4testsetup')
+    toVHDL(nexys4.TestSetup, _SPEC, _CLK, _RESET, _UART_RX, _UART_TX)
 
 if __name__ == '__main__':
     _create_output_directory()
@@ -139,3 +142,4 @@ if __name__ == '__main__':
     _generate_fifo()
     _generate_nexys4_clock_enable_buffer()
     _generate_nexys4_board_component()
+    _generate_nexys4_test_setup()
