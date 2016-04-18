@@ -128,7 +128,7 @@ def _generate_nexys4_board_component():
             exp_reset_active=_EXP_RESET_ACTIVE, baudrate=_UART_BAUDRATE)
 
 def _generate_nexys4_test_setup():
-    _set_to_vhdl_defaults('nexys4testsetup')
+    _set_tovhdl_defaults('nexys4testsetup')
     toVHDL(nexys4.TestSetup, _SPEC, _CLK, _RESET, _UART_RX, _UART_TX)
 
 if __name__ == '__main__':
