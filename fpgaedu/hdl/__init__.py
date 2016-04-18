@@ -9,3 +9,4 @@ from ._controller import Controller
 from ._fifo import Fifo
 from ._message_receiver import MessageReceiver
 from ._message_transmitter import MessageTransmitter
+from ._test_experiment import TestExperiment

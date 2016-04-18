@@ -1,5 +1,5 @@
 import os
-from myhdl import toVHDL, Signal, ResetSignal, intbv
+from myhdl import toVHDL, toVerilog, Signal, ResetSignal, intbv
 from fpgaedu import ControllerSpec
 from fpgaedu.hdl import (BaudGen, UartRx, UartTx, BaudGenRxLookup, Rom, Fifo,
         Controller)
@@ -75,6 +75,15 @@ def _set_tovhdl_defaults(name, directory=_OUTPUT_DIRECTORY):
     toVHDL.std_logic_ports = True
     toVHDL.name = name
     toVHDL.directory = directory 
+    toVHDL.use_clauses = \
+'''
+Library UNISIM;
+use UNISIM.vcomponents.all;
+
+use work.pck_myhdl_090.all;
+'''
+    toVerilog.name = name
+    toVerilog.directory = directory
 
 def _generate_baudgen_rx_lookup():
     _set_tovhdl_defaults('baudgen_rx_lookup')
@@ -128,8 +137,9 @@ def _generate_nexys4_board_component():
             exp_reset_active=_EXP_RESET_ACTIVE, baudrate=_UART_BAUDRATE)
 
 def _generate_nexys4_test_setup():
-    _set_to_vhdl_defaults('nexys4testsetup')
+    _set_tovhdl_defaults('nexys4testsetup')
     toVHDL(nexys4.TestSetup, _SPEC, _CLK, _RESET, _UART_RX, _UART_TX)
+    toVerilog(nexys4.TestSetup, _SPEC, _CLK, _RESET, _UART_RX, _UART_TX)
 
 if __name__ == '__main__':
     _create_output_directory()

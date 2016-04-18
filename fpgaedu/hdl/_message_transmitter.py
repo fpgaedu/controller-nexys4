@@ -25,6 +25,7 @@ def MessageTransmitter(spec, clk, reset, tx_fifo_data_write, tx_fifo_full,
     message_next = Signal(intbv(0)[spec.width_message_bytes*8:0])
     byte_count_reg = Signal(intbv(0)[spec.width_message_bytes:0])
     byte_count_next = Signal(intbv(0)[spec.width_message_bytes:0])
+    index_low = Signal(intbv(0, min=0, max=8*spec.width_message_bytes+1))
     
     dout = Signal(intbv(0)[8:0])
     esc = Signal(False)
@@ -64,12 +65,21 @@ def MessageTransmitter(spec, clk, reset, tx_fifo_data_write, tx_fifo_full,
         elif state_reg == state_t.TRANSMIT_STOP:
             if not tx_fifo_full:
                 state_next.next = state_t.IDLE
+    @always_comb
+    def index_logic():
+        index_low.next = 8*spec.width_message_bytes-byte_count_reg*8-8
 
     @always_comb
     def dout_logic():
-        index_high = 8*spec.width_message_bytes-byte_count_reg*8
-        index_low = 8*spec.width_message_bytes-byte_count_reg*8-8
-        dout.next = message_reg[index_high:index_low]
+        #dout.next = message_reg[index_high:index_low]
+        dout.next[0] = message_reg[index_low+0]
+        dout.next[1] = message_reg[index_low+1]
+        dout.next[2] = message_reg[index_low+2]
+        dout.next[3] = message_reg[index_low+3]
+        dout.next[4] = message_reg[index_low+4]
+        dout.next[5] = message_reg[index_low+5]
+        dout.next[6] = message_reg[index_low+6]
+        dout.next[7] = message_reg[index_low+7]
         
     @always_comb
     def esc_logic():
@@ -94,5 +104,5 @@ def MessageTransmitter(spec, clk, reset, tx_fifo_data_write, tx_fifo_full,
             tx_fifo_data_write.next = spec.chr_stop
 
     return (register_logic, next_state_logic, output_logic, dout_logic, 
-            esc_logic)
+            esc_logic, index_logic)
 

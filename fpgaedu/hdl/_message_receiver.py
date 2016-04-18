@@ -26,6 +26,7 @@ def MessageReceiver(spec, clk, reset, rx_fifo_data_read, rx_fifo_empty,
     message_next = Signal(intbv(0)[spec.width_message_bytes*8:0])
     byte_count_reg = Signal(intbv(0)[spec.width_message_bytes:0])
     byte_count_next = Signal(intbv(0)[spec.width_message_bytes:0])
+    index_low = Signal(intbv(0, min=0, max=8*spec.width_message_bytes+1))
 
     @always_seq(clk.posedge, reset=reset)
     def register_logic():
@@ -33,6 +34,10 @@ def MessageReceiver(spec, clk, reset, rx_fifo_data_read, rx_fifo_empty,
         esc_reg.next = esc_next
         message_reg.next = message_next
         byte_count_reg.next = byte_count_next
+
+    @always_comb
+    def index_logic():
+        index_low.next = 8*spec.width_message_bytes - byte_count_reg*8 -8
 
     @always_comb
     def next_state_logic():
@@ -56,8 +61,14 @@ def MessageReceiver(spec, clk, reset, rx_fifo_data_read, rx_fifo_empty,
                     spec.chr_esc) or (esc_reg and not rx_fifo_empty):
                 byte_count_next.next = (byte_count_reg + 1) % \
                         spec.width_message_bytes
-                message_next.next[8*byte_count_reg+8:8*byte_count_reg] = \
-                        rx_fifo_data_read
+                message_next.next[index_low+0] = rx_fifo_data_read[0]
+                message_next.next[index_low+1] = rx_fifo_data_read[1]
+                message_next.next[index_low+2] = rx_fifo_data_read[2]
+                message_next.next[index_low+3] = rx_fifo_data_read[3]
+                message_next.next[index_low+4] = rx_fifo_data_read[4]
+                message_next.next[index_low+5] = rx_fifo_data_read[5]
+                message_next.next[index_low+6] = rx_fifo_data_read[6]
+                message_next.next[index_low+7] = rx_fifo_data_read[7]
                 if byte_count_reg == spec.width_message_bytes-1:
                     state_next.next = state_t.READ_STOP
         elif state_reg == state_t.READ_STOP:
@@ -79,5 +90,5 @@ def MessageReceiver(spec, clk, reset, rx_fifo_data_read, rx_fifo_empty,
         else:
             rx_fifo_dequeue.next = not rx_fifo_empty
 
-    return register_logic, next_state_logic, output_logic
+    return register_logic, next_state_logic, output_logic, index_logic
 

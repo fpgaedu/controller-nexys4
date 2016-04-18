@@ -15,7 +15,7 @@ def TestExperiment(clk, reset, addr, din, dout, wen):
 
     @always_comb
     def logic():
-        dout.next = (addr +1)% (2^8)
+        dout.next = (addr +1)% (256)
 
     clk.read = True
     reset.read = True
