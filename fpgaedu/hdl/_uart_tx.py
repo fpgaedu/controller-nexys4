@@ -32,11 +32,11 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
     count_reg = Signal(intbv(0, min=0, max=data_bits))
     count_next = Signal(intbv(0, min=0, max=8))
 
-    HIGH = True
-    LOW = False
-    START = LOW
-    STOP = HIGH
-    IDLE = HIGH
+    LVL_HIGH = True
+    LVL_LOW = False
+    LVL_START = LVL_LOW
+    LVL_STOP = LVL_HIGH
+    LVL_IDLE = LVL_HIGH
 
     @always_seq(clk.posedge, reset=reset)
     def reg_logic():
@@ -78,7 +78,7 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
 
     @always_comb
     def output_logic():
-        tx.next = IDLE
+        tx.next = LVL_IDLE
         tx_busy.next = True
 
         if state_reg == state_t.READY:
@@ -86,11 +86,11 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
         elif state_reg == state_t.WAIT_START:
             pass
         elif state_reg == state_t.SEND_START:
-            tx.next = START
+            tx.next = LVL_START
         elif state_reg == state_t.SEND_DATA:
             tx.next = data_reg[count_reg]
         elif state_reg == state_t.SEND_STOP:
-            tx.next = STOP
+            tx.next = LVL_STOP
 
     return reg_logic, next_state_logic, output_logic
 

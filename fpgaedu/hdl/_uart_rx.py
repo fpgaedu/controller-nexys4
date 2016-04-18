@@ -40,11 +40,11 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
     data_count_reg = Signal(intbv(0, min=0, max=data_bits))
     data_count_next = Signal(intbv(0, min=0, max=data_bits))
 
-    HIGH = True
-    LOW = False
-    START = LOW
-    STOP = HIGH
-    IDLE = HIGH
+    LVL_HIGH = True
+    LVL_LOW = False
+    LVL_START = LVL_LOW
+    LVL_STOP = LVL_HIGH
+    LVL_IDLE = LVL_HIGH
 
     @always_seq(clk.posedge, reset)
     def register_logic():
@@ -67,7 +67,7 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
         if state_reg == state_t.WAIT_START:
             data_next.next = 0
 
-            if rx == START and rx_baud_tick == True:
+            if rx == LVL_START and rx_baud_tick == True:
                 state_next.next = state_t.RECV_START
 
         elif state_reg == state_t.RECV_START:
@@ -112,7 +112,7 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
             rx_busy.next = True
 
         if state_reg == state_t.RECV_STOP and baud_count_reg == rx_div-1 \
-                and rx == STOP:
+                and rx == LVL_STOP:
             rx_finish.next = True
             rx_data.next = data_reg
 

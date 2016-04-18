@@ -72,19 +72,19 @@ class MessageReceiverTestCase(TestCase):
             self.assertFalse(self.message_ready)
 
             self.rx_fifo_empty.next = False
-            self.rx_fifo_data_read.next = 0x01
+            self.rx_fifo_data_read.next = 0xAA
             yield self.clk.negedge
             self.assertTrue(self.rx_fifo_dequeue)
             self.assertFalse(self.message_ready)
 
             self.rx_fifo_empty.next = False
-            self.rx_fifo_data_read.next = 0x02
+            self.rx_fifo_data_read.next = 0xFF
             yield self.clk.negedge
             self.assertTrue(self.rx_fifo_dequeue)
             self.assertFalse(self.message_ready)
 
             self.rx_fifo_empty.next = False
-            self.rx_fifo_data_read.next = 0x03
+            self.rx_fifo_data_read.next = 0xFF
             yield self.clk.negedge
             self.assertTrue(self.rx_fifo_dequeue)
             self.assertFalse(self.message_ready)
@@ -102,13 +102,13 @@ class MessageReceiverTestCase(TestCase):
             self.assertFalse(self.message_ready)
 
             self.rx_fifo_empty.next = False
-            self.rx_fifo_data_read.next = 0x05
+            self.rx_fifo_data_read.next = 0xFF
             yield self.clk.negedge
             self.assertTrue(self.rx_fifo_dequeue)
             self.assertFalse(self.message_ready)
 
             self.rx_fifo_empty.next = False
-            self.rx_fifo_data_read.next = 0xFF
+            self.rx_fifo_data_read.next = 0xAF
             yield self.clk.negedge
             self.assertTrue(self.rx_fifo_dequeue)
             self.assertFalse(self.message_ready)
@@ -118,8 +118,9 @@ class MessageReceiverTestCase(TestCase):
             yield self.clk.negedge
             self.assertFalse(self.rx_fifo_dequeue)
             self.assertTrue(self.message_ready)
-            
 
+            self.assertEquals(self.message, 0xAFFFF12FFAF)
+            
             self.stop_simulation()
 
         self.simulate([test])
