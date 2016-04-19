@@ -55,7 +55,6 @@ def Fifo(clk, reset, din, enqueue, dout, dequeue, empty, full,
             if not(count_reg == depth):
                 count_next.next = count_reg + 1
                 mem[(oldest_addr_reg + count_reg) % depth].next = din
-                print('fifo: enqueue, din=%s' % din)
         elif not enqueue and dequeue:
             if count_reg == 0:
                 count_next.next = count_reg
@@ -71,7 +70,6 @@ def Fifo(clk, reset, din, enqueue, dout, dequeue, empty, full,
         if count_reg == 0:
             dout.next = 0
         else:
-            print('fifo:dout')
             dout.next = mem[oldest_addr_reg]
         
         if count_reg == 0:

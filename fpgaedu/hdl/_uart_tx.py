@@ -52,7 +52,6 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
         count_next.next = 0
 
         if state_reg == state_t.READY:
-            print('uart_tx: ready, data=%s' % tx_data)
             if tx_start:
                 state_next.next = state_t.WAIT_START
                 data_next.next = tx_data
@@ -61,16 +60,12 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
                 data_next.next = tx_data
         elif state_reg == state_t.WAIT_START:
             if baud_tick:
-                print('uart_tx: wait_start')
                 state_next.next = state_t.SEND_START
         elif state_reg == state_t.SEND_START:
             if baud_tick:
-                print('uart_tx: send_start')
                 state_next.next = state_t.SEND_DATA
         elif state_reg == state_t.SEND_DATA:
             if baud_tick:
-                print('uart_tx: send_data: data_reg=%s, count_reg=%s' %
-                        (data_reg, count_reg))
                 count_next.next = (count_reg + 1) % data_bits
                 if count_reg == data_bits - 1:
                     state_next.next = state_t.SEND_STOP
@@ -78,7 +73,6 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
                 count_next.next = count_reg
         elif state_reg == state_t.SEND_STOP:
             if baud_tick:
-                print('uart_tx: send_stop')
                 count_next.next = (count_reg + 1) % stop_bits
                 state_next.next = state_t.READY
 
@@ -97,7 +91,6 @@ def UartTx(clk, reset, tx, tx_data, tx_start, tx_busy, baud_tick, data_bits=8,
             tx.next = data_reg[count_reg]
         elif state_reg == state_t.SEND_STOP:
             tx.next = LVL_STOP
-        print('uart_tx: tx_next=%s@%s' % (tx.next, now()))
 
     return reg_logic, next_state_logic, output_logic
 
