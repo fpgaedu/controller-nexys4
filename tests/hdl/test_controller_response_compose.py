@@ -18,18 +18,17 @@ class ControllerResponseComposeTestCase(TestCase):
         self.addr = Signal(intbv(0)[self.spec.width_addr:0])
         self.data = Signal(intbv(0)[self.spec.width_data:0])
         self.nop = Signal(False)
-        self.tx_fifo_full = Signal(False)
+        self.tx_ready = Signal(False)
         self.cycle_count = Signal(intbv(0)[self.spec.width_value:0])
         # Output signals
-        self.tx_fifo_enqueue = Signal(False)
-        self.tx_fifo_din = Signal(intbv(0)[self.spec.width_message:0])
+        self.tx_next = Signal(False)
+        self.tx_msg = Signal(intbv(0)[self.spec.width_message:0])
 
         self.response_compose = ControllerResponseCompose(spec=self.spec,
                 opcode_res=self.opcode_res, addr=self.addr, data=self.data,
                 nop=self.nop, cycle_count=self.cycle_count,
-                tx_fifo_full=self.tx_fifo_full, 
-                tx_fifo_enqueue=self.tx_fifo_enqueue,
-                tx_fifo_data_write=self.tx_fifo_din)
+                tx_ready=self.tx_ready, tx_next=self.tx_next,
+                tx_msg=self.tx_msg)
 
     def simulate(self, test_logic, duration=None):
         sim = Simulation(self.response_compose, test_logic)
@@ -39,58 +38,58 @@ class ControllerResponseComposeTestCase(TestCase):
         raise StopSimulation()
 
     def assert_value_type_response(self, opcode_expected, value_expected):
-        opcode_actual = self.spec.parse_opcode(self.tx_fifo_din.val)
-        value_actual = self.spec.parse_value(self.tx_fifo_din.val)
+        opcode_actual = self.spec.parse_opcode(self.tx_msg.val)
+        value_actual = self.spec.parse_value(self.tx_msg.val)
     
         self.assertEquals(opcode_actual, opcode_expected)
         self.assertEquals(value_actual, value_expected)
 
     def assert_addr_type_response(self, opcode_expected, addr_expected, 
             data_expected):
-        opcode_actual = self.spec.parse_opcode(self.tx_fifo_din.val)
-        addr_actual = self.spec.parse_addr(self.tx_fifo_din.val)
-        data_actual = self.spec.parse_data(self.tx_fifo_din.val)
+        opcode_actual = self.spec.parse_opcode(self.tx_msg.val)
+        addr_actual = self.spec.parse_addr(self.tx_msg.val)
+        data_actual = self.spec.parse_data(self.tx_msg.val)
         
         self.assertEquals(opcode_actual, opcode_expected)
         self.assertEquals(addr_actual, addr_expected)
         self.assertEquals(data_actual, data_expected)
 
-    def test_tx_fifo_enqueue(self):
+    def test_tx_next(self):
 
         @instance
         def test():
             yield delay(1)
             
             self.nop.next = True
-            self.tx_fifo_full.next = True
+            self.tx_ready.next = False
             yield delay(1)
-            self.assertFalse(self.tx_fifo_enqueue)
+            self.assertFalse(self.tx_next)
 
             self.nop.next = True
-            self.tx_fifo_full.next = False
+            self.tx_ready.next = True
             yield delay(1)
-            self.assertFalse(self.tx_fifo_enqueue)
+            self.assertFalse(self.tx_next)
 
             self.nop.next = False
-            self.tx_fifo_full.next = True
+            self.tx_ready.next = False
             yield delay(1)
-            self.assertFalse(self.tx_fifo_enqueue)
+            self.assertFalse(self.tx_next)
 
             self.nop.next = False
-            self.tx_fifo_full.next = False
+            self.tx_ready.next = True
             yield delay(1)
-            self.assertTrue(self.tx_fifo_enqueue)
+            self.assertTrue(self.tx_next)
 
             self.stop_simulation()
 
         self.simulate(test)
 
-    def test_tx_fifo_din(self):
+    def test_tx_msg(self):
 
         @instance
         def test():
             self.nop.next = False
-            self.tx_fifo_full.next = False
+            self.tx_ready.next = True
 
             # read success
             self.addr.next = 23

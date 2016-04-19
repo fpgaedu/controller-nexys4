@@ -5,9 +5,8 @@ from fpgaedu.hdl._controller_control import ControllerControl
 from fpgaedu.hdl._controller_cycle_control import ControllerCycleControl
 from fpgaedu.hdl._controller_response_compose import ControllerResponseCompose
 
-def Controller(spec, clk, reset, rx_fifo_data_read, rx_fifo_dequeue, 
-        rx_fifo_empty, tx_fifo_data_write, tx_fifo_enqueue, tx_fifo_full, 
-        exp_addr, exp_data_write, exp_data_read, exp_wen, exp_reset, 
+def Controller(spec, clk, reset, rx_msg, rx_next, rx_ready, tx_msg, tx_next, 
+        tx_ready, exp_addr, exp_data_write, exp_data_read, exp_wen, exp_reset, 
         exp_clk_en, exp_reset_active=False):
     '''
     spec
@@ -16,19 +15,10 @@ def Controller(spec, clk, reset, rx_fifo_data_read, rx_fifo_dequeue,
         Clock input
     reset
         Reset input
-    rx_fifo_data_read
-        Input signal reading the rx fifo's dout signal
-    rx_fifo_dequeue
-        Output pulse signal signalling the rx fifo to pop the current oldest item
-    rx_fifo_empty
-        Input signal indicating whether the rx fifo is empty
-    tx_fifo_data_write
-        Output signal setting the value to add to the tx fifo
-    tx_fifo_enqueue
-        Output pulse signal signallig the tx_fifo to add the value set on 
-        tx_fifo_din to be pushed onto its queue
-    tx_fifo_full
-        Input signal indicating that the tx_fifo is full
+    rx_*
+        rx_signals
+    tx_*
+        tx signals
     exp_addr
         Output signal setting the address for the experiment to be operated on
     exp_data_write
@@ -62,16 +52,16 @@ def Controller(spec, clk, reset, rx_fifo_data_read, rx_fifo_dequeue,
     cycle_pause = Signal(False)
     cycle_step = Signal(False)
     
-    cmd_message = rx_fifo_data_read
+    cmd_message = rx_msg
     cmd_opcode = Signal(intbv(0)[spec.width_opcode-1:0])
     cmd_addr = Signal(intbv(0)[spec.width_addr-1:0])
     cmd_data = Signal(intbv(0)[spec.width_data-1:0])
 
     # EX stage instances
     control = ControllerControl(spec=spec, opcode_cmd=cmd_opcode, reset=reset,
-            opcode_res=ex_res_opcode_res_next, rx_fifo_empty=rx_fifo_empty,
-            cycle_autonomous=cycle_autonomous, rx_fifo_dequeue=rx_fifo_dequeue,
-            tx_fifo_full=tx_fifo_full, nop=ex_res_nop_next,
+            opcode_res=ex_res_opcode_res_next, rx_ready=rx_ready,
+            cycle_autonomous=cycle_autonomous, rx_next=rx_next,
+            tx_ready=tx_ready, nop=ex_res_nop_next,
             exp_wen=exp_wen, exp_reset=exp_reset, cycle_start=cycle_start, 
             cycle_pause=cycle_pause, cycle_step=cycle_step,
             exp_reset_active=exp_reset_active)
@@ -86,8 +76,7 @@ def Controller(spec, clk, reset, rx_fifo_data_read, rx_fifo_dequeue,
             opcode_res=ex_res_opcode_res_reg,
             addr=ex_res_addr_reg, data=exp_data_read,
             nop=ex_res_nop_reg, cycle_count=ex_res_cycle_count_reg,
-            tx_fifo_full=tx_fifo_full, tx_fifo_enqueue=tx_fifo_enqueue,
-            tx_fifo_data_write=tx_fifo_data_write)
+            tx_ready=tx_ready, tx_next=tx_next, tx_msg=tx_msg)
 
     @always_seq(clk.posedge, reset)
     def pipeline_register_logic():

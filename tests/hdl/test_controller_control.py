@@ -15,12 +15,12 @@ class ControllerControlTestCase(TestCase):
         self.spec = ControllerSpec(self.WIDTH_ADDR, self.WIDTH_DATA)
         # input signals
         self.opcode_cmd = Signal(intbv(0)[self.spec.width_opcode:0])
-        self.rx_fifo_empty = Signal(False)
-        self.tx_fifo_full = Signal(False)
+        self.rx_ready = Signal(False)
+        self.tx_ready = Signal(False)
         self.cycle_autonomous = Signal(False)
         self.reset = ResetSignal(True, active=False, async=False)
         # output signals
-        self.rx_fifo_dequeue = Signal(False)
+        self.rx_next = Signal(False)
         self.opcode_res = Signal(intbv(0)[self.spec.width_message:0])
         self.nop = Signal(False)
         self.exp_wen = Signal(False)
@@ -32,9 +32,9 @@ class ControllerControlTestCase(TestCase):
 
         self.control = ControllerControl(spec=self.spec, reset=self.reset,
                 opcode_cmd=self.opcode_cmd, opcode_res=self.opcode_res,
-                rx_fifo_empty=self.rx_fifo_empty, 
-                rx_fifo_dequeue=self.rx_fifo_dequeue,
-                tx_fifo_full=self.tx_fifo_full, nop=self.nop, 
+                rx_ready=self.rx_ready, 
+                rx_next=self.rx_next,
+                tx_ready=self.tx_ready, nop=self.nop, 
                 exp_wen=self.exp_wen, exp_reset=self.exp_reset,
                 cycle_autonomous=self.cycle_autonomous,
                 cycle_start=self.cycle_start, cycle_pause=self.cycle_pause,
@@ -53,8 +53,8 @@ class ControllerControlTestCase(TestCase):
         @instance
         def test():
             self.opcode_cmd.next = self.spec.opcode_cmd_read
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = False
+            self.tx_ready.next = False
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.exp_wen)
@@ -63,18 +63,18 @@ class ControllerControlTestCase(TestCase):
             yield delay(10)
             self.assertFalse(self.exp_wen)
 
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = True
+            self.tx_ready.next = False
             yield delay(10)
             self.assertFalse(self.exp_wen)
 
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = False
+            self.tx_ready.next = True
             yield delay(10)
             self.assertFalse(self.exp_wen)
 
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             yield delay(10)
             self.assertTrue(self.exp_wen)
 
@@ -93,26 +93,26 @@ class ControllerControlTestCase(TestCase):
             yield delay(10)
     
             self.opcode_cmd.next = self.spec.opcode_cmd_reset
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = False
+            self.tx_ready.next = False
             yield delay(10)
             self.assertEquals(self.exp_reset, not self.EXP_RESET_ACTIVE)
 
             self.opcode_cmd.next = self.spec.opcode_cmd_reset
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = True
+            self.tx_ready.next = False
             yield delay(10)
             self.assertEquals(self.exp_reset, not self.EXP_RESET_ACTIVE)
 
             self.opcode_cmd.next = self.spec.opcode_cmd_reset
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = False
+            self.tx_ready.next = True
             yield delay(10)
             self.assertEquals(self.exp_reset, not self.EXP_RESET_ACTIVE)
 
             self.opcode_cmd.next = self.spec.opcode_cmd_reset
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             yield delay(10)
             self.assertEquals(self.exp_reset, self.EXP_RESET_ACTIVE)
 
@@ -131,35 +131,35 @@ class ControllerControlTestCase(TestCase):
         @instance
         def test():
 
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = False
+            self.tx_ready.next = False
             yield delay(10)
             self.assertTrue(self.nop)
-            self.assertFalse(self.rx_fifo_dequeue)
+            self.assertFalse(self.rx_next)
 
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             yield delay(10)
             self.assertFalse(self.nop)
-            self.assertTrue(self.rx_fifo_dequeue)
+            self.assertTrue(self.rx_next)
 
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = True
+            self.tx_ready.next = False
             yield delay(10)
             self.assertTrue(self.nop)
-            self.assertFalse(self.rx_fifo_dequeue)
+            self.assertFalse(self.rx_next)
 
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             yield delay(10)
             self.assertFalse(self.nop)
-            self.assertTrue(self.rx_fifo_dequeue)
+            self.assertTrue(self.rx_next)
 
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = False
+            self.tx_ready.next = True
             yield delay(10)
             self.assertTrue(self.nop)
-            self.assertFalse(self.rx_fifo_dequeue)
+            self.assertFalse(self.rx_next)
 
             self.stop_simulation()
 
@@ -169,8 +169,8 @@ class ControllerControlTestCase(TestCase):
 
         @instance
         def test():
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             self.cycle_autonomous.next = False
 
             def test_opcode(cmd, res_expected):
@@ -222,32 +222,32 @@ class ControllerControlTestCase(TestCase):
             
             # rx empty, tx full, no start
             self.opcode_cmd.next = self.spec.opcode_cmd_start
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = False
+            self.tx_ready.next = False
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_start)
 
             # tx full, no start
             self.opcode_cmd.next = self.spec.opcode_cmd_start
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = True
+            self.tx_ready.next = False
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_start)
 
             # rx empty, no start
             self.opcode_cmd.next = self.spec.opcode_cmd_start
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = False
+            self.tx_ready.next = True
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_start)
 
             # should signal start now
             self.opcode_cmd.next = self.spec.opcode_cmd_start
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertTrue(self.cycle_start)
@@ -274,40 +274,40 @@ class ControllerControlTestCase(TestCase):
 
             # rx empty, tx full, no pause
             self.opcode_cmd.next = self.spec.opcode_cmd_pause
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = False
+            self.tx_ready.next = False
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_pause)
 
             # rx empty, no pause
             self.opcode_cmd.next = self.spec.opcode_cmd_pause
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = False
+            self.tx_ready.next = True
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_pause)
 
             # tx full, no pause
             self.opcode_cmd.next = self.spec.opcode_cmd_pause
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = True
+            self.tx_ready.next = False
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_pause)
 
             # cycle controller not in autonomous mode, no pause
             self.opcode_cmd.next = self.spec.opcode_cmd_pause
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_pause)
 
             # cycle controller in autonomous mode, pause signal
             self.opcode_cmd.next = self.spec.opcode_cmd_pause
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             self.cycle_autonomous.next = True
             yield delay(10)
             self.assertTrue(self.cycle_pause)
@@ -329,40 +329,40 @@ class ControllerControlTestCase(TestCase):
 
             # rx empty, tx full, no step
             self.opcode_cmd.next = self.spec.opcode_cmd_step
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = False
+            self.tx_ready.next = False
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_step)
             
             # tx full, no step
             self.opcode_cmd.next = self.spec.opcode_cmd_step
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = True
+            self.rx_ready.next = True
+            self.tx_ready.next = False
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_step)
 
             # rx empty, no step
             self.opcode_cmd.next = self.spec.opcode_cmd_step
-            self.rx_fifo_empty.next = True
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = False
+            self.tx_ready.next = True
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertFalse(self.cycle_step)
 
             # in autonomous mode, no step
             self.opcode_cmd.next = self.spec.opcode_cmd_step
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             self.cycle_autonomous.next = True
             yield delay(10)
             self.assertFalse(self.cycle_step)
 
             # not in autonomous mode, no step
             self.opcode_cmd.next = self.spec.opcode_cmd_step
-            self.rx_fifo_empty.next = False
-            self.tx_fifo_full.next = False
+            self.rx_ready.next = True
+            self.tx_ready.next = True
             self.cycle_autonomous.next = False
             yield delay(10)
             self.assertTrue(self.cycle_step)

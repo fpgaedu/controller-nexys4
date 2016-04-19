@@ -1,4 +1,4 @@
-from myhdl import Signal, intbv, always_seq, always_comb, always
+from myhdl import now, Signal, intbv, always_seq, always_comb, always
 #from math import log2, ceil
 from fpgaedu.hdl import Ram
 

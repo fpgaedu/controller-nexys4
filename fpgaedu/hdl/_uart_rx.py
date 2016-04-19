@@ -48,6 +48,7 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
 
     @always_seq(clk.posedge, reset)
     def register_logic():
+        
         state_reg.next = state_next
         baud_count_reg.next = baud_count_next
         data_count_reg.next = data_count_next
@@ -59,10 +60,13 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
         Determine next state levels for registers state_reg, baud_count_reg,
         data_count_reg and data_reg based on current state and input signals
         '''
+        rx_finish.next = False
+        rx_data.next = 0
         state_next.next = state_reg
         baud_count_next.next = baud_count_reg
         data_next.next = data_reg
         data_count_next.next = data_count_reg
+
 
         if state_reg == state_t.WAIT_START:
             data_next.next = 0
@@ -72,8 +76,7 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
 
         elif state_reg == state_t.RECV_START:
             if rx_baud_tick == True:
-                baud_count_next.next = (baud_count_reg + 1) \
-                        % int(rx_div/2)
+                baud_count_next.next = (baud_count_reg + 1) % int(rx_div/2)
 
                 if baud_count_reg == int(rx_div/2) - 1:
                     state_next.next = state_t.RECV_DATA
@@ -90,11 +93,14 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
                         state_next.next = state_t.RECV_STOP
 
         elif state_reg == state_t.RECV_STOP:
-            if rx_baud_tick == 1:
+            if rx_baud_tick == True:
                 baud_count_next.next = (baud_count_reg + 1) % rx_div
 
-                if baud_count_reg == rx_div - 1:
-                    state_next.next = state_t.WAIT_START
+            if baud_count_reg == rx_div - 1:
+                state_next.next = state_t.WAIT_START
+                if rx == LVL_STOP:
+                    rx_data.next = data_reg
+                    rx_finish.next = True
 
     @always_comb
     def output_logic():
@@ -103,18 +109,10 @@ def UartRx(clk, reset, rx, rx_data, rx_finish, rx_busy, rx_baud_tick,
         on input signals and current register states 
         """
 
-        rx_finish.next = False
-        rx_data.next = 0
-
         if state_reg == state_t.WAIT_START:
             rx_busy.next = False
         else:
             rx_busy.next = True
-
-        if state_reg == state_t.RECV_STOP and baud_count_reg == rx_div-1 \
-                and rx == LVL_STOP:
-            rx_finish.next = True
-            rx_data.next = data_reg
 
     return register_logic, next_state_logic, output_logic
 

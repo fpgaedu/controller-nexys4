@@ -8,8 +8,8 @@ class UartRxTestCase(TestCase):
 
     DATA_BITS = 8
     STOP_BITS = 1
-    HALF_PERIOD = 1
-    RX_DIV = 2
+    HALF_PERIOD = 5
+    RX_DIV = 4
 
     HIGH = True
     LOW = False
@@ -47,8 +47,6 @@ class UartRxTestCase(TestCase):
         def monitor():
             for data in test_data:
                 yield self.rx_finish.posedge
-                print(data)
-                print('bingo! received %s' % bin(self.rx_data))
                 self.assertEquals(self.rx_data, int(data, 2))
 
         @instance
@@ -72,7 +70,6 @@ class UartRxTestCase(TestCase):
                     yield self.clk.negedge
 
             for data in test_data:
-                print('new iteration: now %s' % now())
                 self.rx.next = self.START
                 yield baud_tick(self.RX_DIV)
                 for bit in data[::-1]:
@@ -81,7 +78,7 @@ class UartRxTestCase(TestCase):
                 self.rx.next = self.STOP
                 yield baud_tick(self.RX_DIV)
                 yield baud_tick(self.RX_DIV)
-                    
+            
             self.stop_simulation()
 
         self.simulate([test, monitor])

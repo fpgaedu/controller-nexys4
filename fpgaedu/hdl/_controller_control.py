@@ -1,7 +1,7 @@
 from myhdl import (always_comb, Signal)
 
-def ControllerControl(spec, reset, opcode_cmd, opcode_res, rx_fifo_empty, 
-        cycle_autonomous, rx_fifo_dequeue, tx_fifo_full, nop, exp_wen,
+def ControllerControl(spec, reset, opcode_cmd, opcode_res, rx_ready, 
+        cycle_autonomous, rx_next, tx_ready, nop, exp_wen,
         exp_reset, cycle_start, cycle_pause, cycle_step, exp_reset_active=False):
     '''
     Input signals:
@@ -24,12 +24,12 @@ def ControllerControl(spec, reset, opcode_cmd, opcode_res, rx_fifo_empty,
    
     @always_comb
     def internal_logic():
-        nop_int.next = (rx_fifo_empty or tx_fifo_full or reset == reset.active)
+        nop_int.next = (not rx_ready or not tx_ready or reset == reset.active)
 
     @always_comb
     def output_logic():
 
-        rx_fifo_dequeue.next = not nop_int
+        rx_next.next = not nop_int
         nop.next = nop_int
 
         exp_wen.next = (opcode_cmd == spec.opcode_cmd_write and
