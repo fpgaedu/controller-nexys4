@@ -35,22 +35,28 @@ def BoardComponentTx(spec, clk, reset, tx, tx_msg, tx_ready, tx_next,
             tx_start=uart_tx_start, tx_busy=uart_tx_busy, 
             baud_tick=uart_tx_baud_tick, data_bits=8, stop_bits=1)
 
-    fifo_tx = Fifo(clk=clk, reset=reset, din=fifo_tx_din, 
-            enqueue=fifo_tx_enqueue, dout=fifo_tx_dout, 
-            dequeue=fifo_tx_dequeue, empty=fifo_tx_empty, full=fifo_tx_full,
-            data_width=8, depth=12)
+    #fifo_tx = Fifo(clk=clk, reset=reset, din=fifo_tx_din, 
+    #        enqueue=fifo_tx_enqueue, dout=fifo_tx_dout, 
+    #        dequeue=fifo_tx_dequeue, empty=fifo_tx_empty, full=fifo_tx_full,
+    #        data_width=8, depth=12)
+
+    #transmitter = MessageTransmitter(spec=spec, clk=clk, reset=reset,
+    #        tx_fifo_data_write=fifo_tx_din, tx_fifo_full=fifo_tx_full,
+    #        tx_fifo_enqueue=fifo_tx_enqueue, message=tx_msg, 
+    #        ready=tx_ready, transmit_next=tx_next)
 
     transmitter = MessageTransmitter(spec=spec, clk=clk, reset=reset,
-            tx_fifo_data_write=fifo_tx_din, tx_fifo_full=fifo_tx_full,
-            tx_fifo_enqueue=fifo_tx_enqueue, message=tx_msg, 
+            tx_fifo_data_write=uart_tx_data, tx_fifo_full=uart_tx_busy,
+            tx_fifo_enqueue=uart_tx_start, message=tx_msg, 
             ready=tx_ready, transmit_next=tx_next)
 
-    @always_comb
-    def fifo_to_uart_logic():
-        uart_tx_data.next = fifo_tx_dout
-        uart_tx_start.next = (not uart_tx_busy and not fifo_tx_empty)
-        fifo_tx_dequeue.next = (not uart_tx_busy and not fifo_tx_empty)
+    #@always_comb
+    #def fifo_to_uart_logic():
+    #    uart_tx_data.next = fifo_tx_dout
+    #    uart_tx_start.next = (not uart_tx_busy and not fifo_tx_empty)
+    #    fifo_tx_dequeue.next = (not uart_tx_busy and not fifo_tx_empty)
 
-    return uart_tx, fifo_tx, transmitter, fifo_to_uart_logic
+    #return uart_tx, fifo_tx, transmitter, fifo_to_uart_logic
+    return uart_tx, transmitter
 
 
