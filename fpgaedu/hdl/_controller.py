@@ -53,9 +53,9 @@ def Controller(spec, clk, reset, rx_msg, rx_next, rx_ready, tx_msg, tx_next,
     cycle_step = Signal(False)
     
     cmd_message = rx_msg
-    cmd_opcode = Signal(intbv(0)[spec.width_opcode-1:0])
-    cmd_addr = Signal(intbv(0)[spec.width_addr-1:0])
-    cmd_data = Signal(intbv(0)[spec.width_data-1:0])
+    cmd_opcode = Signal(intbv(0)[spec.width_opcode:0])
+    cmd_addr = Signal(intbv(0)[spec.width_addr:0])
+    cmd_data = Signal(intbv(0)[spec.width_data:0])
 
     # EX stage instances
     control = ControllerControl(spec=spec, opcode_cmd=cmd_opcode, reset=reset,
