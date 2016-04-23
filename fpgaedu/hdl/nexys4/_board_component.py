@@ -26,28 +26,6 @@ def BoardComponent(spec, clk, reset, rx, tx,
     rx_baud_tick = Signal(False)
     exp_clk_en = Signal(False)
 
-    #uart_rx_busy = Signal(False)
-    #uart_rx_data = Signal(intbv(0)[_DATA_BITS:0])
-    #uart_rx_finish = Signal(False)
-
-    #uart_tx_data = Signal(intbv(0)[_DATA_BITS:0])
-    #uart_tx_start = Signal(False)
-    #uart_tx_busy = Signal(False)
-
-    #rx_fifo_empty = Signal(False)
-    #rx_fifo_full = Signal(False)
-    #rx_fifo_dequeue = Signal(False)
-    #rx_fifo_dout = Signal(intbv(0)[_DATA_BITS:0])
-    #rx_fifo_din = Signal(intbv(0)[_DATA_BITS:0])
-    #rx_fifo_enqueue = Signal(False)
-
-    #tx_fifo_empty = Signal(False)
-    #tx_fifo_full = Signal(False)
-    #tx_fifo_enqueue = Signal(False)
-    #tx_fifo_din = Signal(intbv(0)[_DATA_BITS:0])
-    #tx_fifo_dout = Signal(intbv(0)[_DATA_BITS:0])
-    #tx_fifo_dequeue = Signal(False)
-
     message_rx_data = Signal(intbv(0)[spec.width_message:0])
     message_rx_ready = Signal(False)
     message_rx_recv_next = Signal(False)
@@ -81,7 +59,6 @@ def BoardComponent(spec, clk, reset, rx, tx,
 
     clock_enable_buffer = ClockEnableBuffer(clk_in=clk, clk_out=exp_clk, 
             clk_en=exp_clk_en)
-
 
     return (controller, baudgen, clock_enable_buffer, component_rx, 
             component_tx)
