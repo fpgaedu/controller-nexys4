@@ -44,8 +44,6 @@ def Fifo(clk, reset, din, enqueue, dout, dequeue, empty, full,
         oldest_addr_reg.next = oldest_addr_next
         count_reg.next = count_next
 
-    @always_comb
-    def next_state_logic():
         if dequeue:
             oldest_addr_next.next = (oldest_addr_reg + 1) % depth
         else:
@@ -77,4 +75,5 @@ def Fifo(clk, reset, din, enqueue, dout, dequeue, empty, full,
         elif count_reg == depth:
             full.next = True
 
-    return register_logic, next_state_logic, output_logic
+    #return register_logic, next_state_logic, output_logic
+    return register_logic, output_logic
