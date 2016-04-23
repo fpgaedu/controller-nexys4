@@ -23,8 +23,8 @@ def MessageTransmitter(spec, clk, reset, tx_fifo_data_write, tx_fifo_full,
     prev_esc_next = Signal(False)
     message_reg = Signal(intbv(0)[spec.width_message_bytes*8:0])
     message_next = Signal(intbv(0)[spec.width_message_bytes*8:0])
-    byte_count_reg = Signal(intbv(0)[spec.width_message_bytes:0])
-    byte_count_next = Signal(intbv(0)[spec.width_message_bytes:0])
+    byte_count_reg = Signal(intbv(0, min=0, max=spec.width_message_bytes))
+    byte_count_next = Signal(intbv(0, min=0, max=spec.width_message_bytes))
     index_low = Signal(intbv(0, min=0, max=8*spec.width_message_bytes+1))
     
     dout = Signal(intbv(0)[8:0])
