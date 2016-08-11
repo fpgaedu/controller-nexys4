@@ -26,6 +26,9 @@ For development environment setup, a virtualenv is recommended.
 ```
 virtualenv virtualenv-fpgaedu
 source virtualenv-fpgaedu/bin/activate
+```
+Then, install the sources in development mode:
+```
 git clone https://github.com/matthijsbos/fpgaedu-nexys4-python.git
 cd fpgaedu-nexys4-python
 python setup.py develop
