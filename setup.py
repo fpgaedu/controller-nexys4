@@ -8,4 +8,9 @@ setup(name='fpgaedu',
         packages=['fpgaedu'],
         install_requires=['myhdl', 'pytest-runner'],
         test_suite='pytest-runner',
-        tests_require=['pytest', 'pytest-xdist'])
+        tests_require=['pytest', 'pytest-xdist'],
+        entry_points={
+            'console_scripts': [
+                'fpgaedu = fpgaedu.script:test'
+            ]
+        })

@@ -4,6 +4,7 @@ from fpgaedu import ControllerSpec
 from fpgaedu.hdl import (BaudGen, UartRx, UartTx, BaudGenRxLookup, Rom, Fifo,
         Controller)
 from fpgaedu.hdl import nexys4
+from fpgaedu.hdl.testexperiment._experiment_setup import ExperimentSetup
 
 # Instance constants
 _CLK_FREQ = 100000000
@@ -15,6 +16,7 @@ _WIDTH_DATA = 8
 _WIDTH_ADDR = 32
 _SPEC = ControllerSpec(_WIDTH_ADDR, _WIDTH_DATA)
 _EXP_RESET_ACTIVE = True
+_WIDTH_COUNT = 8
 
 # toVHDL() constants
 _STD_LOGIC_PORTS = True
@@ -23,6 +25,9 @@ _OUTPUT_DIRECTORY = './vhdl/'
 # Signals
 _CLK = Signal(False)
 _RESET = ResetSignal(True, active=False, async=False)
+
+_ENABLE = Signal(False)
+_COUNT = Signal(intbv()[_WIDTH_COUNT:0])
 
 _UART_RX = Signal(False)
 _UART_RX_TICK = Signal(False)
@@ -141,6 +146,10 @@ def _generate_nexys4_test_setup():
     toVHDL(nexys4.TestSetup, _SPEC, _CLK, _RESET, _UART_RX, _UART_TX)
     #toVerilog(nexys4.TestSetup, _SPEC, _CLK, _RESET, _UART_RX, _UART_TX)
 
+def _generate_counter():
+    _set_tovhdl_defaults('counter')
+    toVHDL(ExperimentSetup, _CLK, _RESET, _ENABLE, _COUNT, _WIDTH_COUNT)
+
 if __name__ == '__main__':
     _create_output_directory()
     #_generate_rom()
@@ -151,5 +160,6 @@ if __name__ == '__main__':
     #_generate_baudgen()
     #_generate_fifo()
     #_generate_nexys4_clock_enable_buffer()
-    #_generate_nexys4_board_component()
+    _generate_nexys4_board_component()
     _generate_nexys4_test_setup()
+    _generate_counter()

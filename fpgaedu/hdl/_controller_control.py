@@ -6,12 +6,12 @@ def ControllerControl(spec, reset, opcode_cmd, opcode_res, rx_ready,
     '''
     Input signals:
         opcode_cmd
-        rx_fifo_empty
+        rx_ready
         cycle_autonomous
-        tx_fifo_full
+        tx_ready
     Output signals:
         opcode_res
-        tx_fifo_dequeue
+        rx_next
         nop
         exp_wen
         exp_reset

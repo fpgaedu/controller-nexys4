@@ -1,6 +1,6 @@
 from myhdl import Signal, intbv
-from fpgaedu.hdl import TestExperiment
 from fpgaedu.hdl.nexys4 import BoardComponent
+from fpgaedu.hdl.testexperiment._wrapper_composition import WrapperComposition
 
 def TestSetup(spec, clk, reset, rx, tx):
     
@@ -14,7 +14,9 @@ def TestSetup(spec, clk, reset, rx, tx):
     board_component = BoardComponent(spec, clk, reset, rx, tx, 
             exp_addr, exp_din, exp_dout, exp_wen, exp_reset, exp_clk, 
             exp_reset_active=True, baudrate=9600)
-    test_experiment = TestExperiment(exp_clk, exp_reset, exp_addr, exp_din, 
-            exp_dout, exp_wen)
+#    test_experiment = TestExperiment(exp_clk, exp_reset, exp_addr, exp_din, 
+#            exp_dout, exp_wen)
+    wrapper = WrapperComposition(clk=clk, exp_clk=exp_clk, exp_reset=exp_reset,
+            din=exp_din, dout=exp_dout, addr=exp_addr, wen=exp_wen)
 
-    return board_component, test_experiment
+    return board_component, wrapper
