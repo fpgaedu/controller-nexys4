@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 import struct
 import cmd, sys
 import serial
@@ -20,7 +22,7 @@ class FpgaEduShell(cmd.Cmd):
     intro = 'Welcome to the fpgaedu shell'
     prompty = '(fpgaedu)'
     connection = None
-    spec = ControllerSpec(32,8)
+    spec = ControllerSpec(1,8)
 
     def do_list_ports(self, arg):
         ports = comports()
@@ -96,12 +98,14 @@ class FpgaEduShell(cmd.Cmd):
     def write_addr_type_cmd(self, opcode, addr, data):
         cmd = struct.pack('>BBIBB', self.spec.chr_start, opcode,
                 addr, data, self.spec.chr_stop)
-        #print(repr(cmd))
+        print('sending address-type command')
+        print(repr(cmd))
         self.connection.write(cmd)
 
     def write_value_type_cmd(self, opcode, value):
-        cmd = struct.pack('>BBBIB', self.spec.chr_start, opcode, 0, value, self.spec.chr_stop)
-        #print(repr(cmd))
+        cmd = struct.pack('>BBIBB', self.spec.chr_start, opcode, 0, value, self.spec.chr_stop)
+        print('sending value-type command')
+        print(repr(cmd))
         self.connection.write(cmd)
 
     def read_res(self):
@@ -110,6 +114,7 @@ class FpgaEduShell(cmd.Cmd):
             self.connection.timeout = 0.1
             esc = False
             message = bytes(0)
+            
 
             #read start byte
             while True:
@@ -135,7 +140,7 @@ class FpgaEduShell(cmd.Cmd):
                 else:
                     esc = False
 
-            #print(repr(message))
+            print(repr(message))
 
             opcode = int.from_bytes(message[0:1], byteorder='big')
             addr = int.from_bytes(message[1:5], byteorder='big')

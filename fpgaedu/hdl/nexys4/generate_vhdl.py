@@ -4,8 +4,8 @@ from fpgaedu import ControllerSpec
 from fpgaedu.hdl.nexys4 import BoardComponent
 
 _UART_BAUDRATE = 9600
+# NEXYS 4 board reset signal is active-low
 _RESET_ACTIVE = False
-_RESET_ACTIVE = True
 
 def _parse_args():
     '''
