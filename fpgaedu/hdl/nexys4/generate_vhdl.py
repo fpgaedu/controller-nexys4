@@ -50,11 +50,12 @@ use work.pck_myhdl_090.all;
     exp_wen = Signal(False)
     exp_reset = Signal(False)
     exp_clk = Signal(False)
+    exp_clk_en = Signal(False)
 
     toVHDL(BoardComponent, spec=spec, clk=clk, reset=reset,
             rx=rx, tx=tx, exp_addr=exp_addr, exp_data_write=exp_din, 
-            exp_data_read=exp_dout, 
-            exp_wen=exp_wen, exp_reset=exp_reset, exp_clk=exp_clk, 
+            exp_data_read=exp_dout, exp_wen=exp_wen, exp_reset=exp_reset, 
+            exp_clk=exp_clk, exp_clk_en=exp_clk_en,
             exp_reset_active=exp_reset_active, baudrate=_UART_BAUDRATE)
 
 if __name__ == '__main__':

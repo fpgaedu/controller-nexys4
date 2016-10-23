@@ -20,11 +20,11 @@ _STOP_BITS=1
 
 def BoardComponent(spec, clk, reset, rx, tx,
         exp_addr, exp_data_write, exp_data_read, exp_wen, exp_reset, 
-        exp_clk, exp_reset_active=True, baudrate=9600):
+        exp_clk, exp_clk_en, exp_reset_active=True, baudrate=9600):
 
     tx_baud_tick = Signal(False)
     rx_baud_tick = Signal(False)
-    exp_clk_en = Signal(False)
+    exp_clk_en_internal = Signal(False)
 
     message_rx_data = Signal(intbv(0)[spec.width_message:0])
     message_rx_ready = Signal(False)
@@ -43,7 +43,7 @@ def BoardComponent(spec, clk, reset, rx, tx,
             tx_ready= message_tx_ready,
             exp_addr=exp_addr, exp_data_write=exp_data_write, 
             exp_data_read=exp_data_read, exp_wen=exp_wen, exp_reset=exp_reset, 
-            exp_clk_en=exp_clk_en, exp_reset_active=exp_reset_active)
+            exp_clk_en=exp_clk_en_internal, exp_reset_active=exp_reset_active)
 
     component_rx = BoardComponentRx(spec=spec, clk=clk, reset=reset, rx=rx,
             rx_msg=message_rx_data, rx_ready=message_rx_ready, 
@@ -58,8 +58,12 @@ def BoardComponent(spec, clk, reset, rx, tx,
             tx_tick=tx_baud_tick, baudrate=baudrate, rx_div=_RX_DIV)
 
     clock_enable_buffer = ClockEnableBuffer(clk_in=clk, clk_out=exp_clk, 
-            clk_en=exp_clk_en)
+            clk_en=exp_clk_en_internal)
+
+    @always_comb
+    def expose_exp_clk_en():
+        exp_clk_en.next = exp_clk_en_internal
 
     return (controller, baudgen, clock_enable_buffer, component_rx, 
-            component_tx)
+            component_tx, expose_exp_clk_en)
 
