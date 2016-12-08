@@ -1,5 +1,5 @@
-# fpgaedu-nexys4-python
-Fpgaedu Board component source generation package for Digilent Nexys 4. HDL sources are defined through MyHDL python package. 
+# Nexys 4 Controller Logic
+FPGAedu controller logic sources package for Digilent Nexys 4. HDL sources are defined through MyHDL python package. 
 
 ## Installation
 First, get this project's sources:
@@ -11,7 +11,7 @@ Then, navigate into the project folder and run the installation script:
 cd fpgaedu-nexys4-python
 python setup.py install
 ```
-## Execution
+## VHDL generation
 To execute the source code generation script, execute:
 ```
 python -m fpgaedu.hdl.nexys4.generate_vhdl -o OUTPUTDIR -a ADDRESSWIDTH -d DATAWIDTH -t TOPLEVEL -r RESETACTIVE
